@@ -1,0 +1,81 @@
+Program :: ExternImport* FuncDef + ;
+
+ExternImport :: #"extern" ^Identifier #Terminator;
+
+FuncDef :: #"func" ^Identifier ArgList Block ;
+ArgList :: #"\(" ^Identifier ? ^CommaArg * #"\)" ;
+CommaArg :: #"," ^Identifier ;
+
+Block :: #"\{" Statement* #"\}" ;
+Statement :: Assignment
+           | Ifblock
+           | Whileblock
+           | Pass
+           | Block
+           | Print
+           | Yield
+           | ReturnStmt
+           | Spawn
+           | ChanRead
+           | ChanWrite
+           | MakeChan
+           ;
+
+Assignment :: ^Identifier #"=" Expression #Terminator ;
+Pass :: #"pass" #Terminator ;
+Ifblock :: #"if" #"\(" LogicExpr #"\)" Statement Elseifblock * Elseblock ? ;
+Elseifblock :: #"else" #"if" #"\(" LogicExpr #"\)" Statement ;
+Elseblock :: #"else" Statement ;
+
+Whileblock :: #"while" #"\(" LogicExpr #"\)" Statement ;
+
+
+ParamList :: #"\(" Expression ? ^CommaParam * #"\)" ;
+CommaParam :: #"," Expression ;
+FuncCall :: ^Identifier ParamList;
+
+ReturnStmt :: # "return" Expression #Terminator ;
+
+Print :: #"print" ^Identifier #Terminator ;
+
+Spawn :: #"spawn" FuncCall #Terminator;
+
+ChanRead :: Identifier #"<-" Identifier #Terminator;
+
+ChanWrite :: Identifier #"->" Identifier #Terminator;
+
+MakeChan :: #"makechan" Identifier #Terminator;
+
+Yield :: #"yield" #Terminator ;
+
+Expression :: Sum;
+Sum :: Product ^SumOpProduct* ;
+SumOpProduct :: ^SumOp Product ;
+Product :: Value ^MulOpValue* ;
+MulOpValue :: ^MulOp Value ;
+Value :: FuncCall
+       | Num
+       | ParenExpr
+       | Identifier ;
+ParenExpr :: #"\(" LogicExpr #"\)" ;
+
+Terminator :: #";" ;
+SumOp :: /[+-]/ ;
+MulOp :: /[*\/%]/ ;
+Num :: /[0-9]+(?:\.[0-9]*)?/ ;
+Identifier :: /[a-zA-Z_][a-zA-Z0-9_]*/ ;
+
+
+LogicExpr :: LogicRelationship ^LogicOpLogicRelationship* ;
+LogicOpLogicRelationship :: ^LogicOp LogicRelationship;
+LogicRelationship :: Expression ^RelationOpExpression ? ;
+RelationOpExpression :: ^RelationOp Expression;
+LogicOp :: "&&"
+         | "\|\|" ;
+RelationOp :: "<="
+            | ">="
+            | "<"
+            | ">"
+            | "=="
+            | "!=" ;
+
