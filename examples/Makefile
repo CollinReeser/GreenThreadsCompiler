@@ -26,10 +26,10 @@ ifElseIfElse: ifElseIfElseCall.c ifElseIfElse.lang
 	nasm -f elf ifElseIfElse.asm
 	gcc -m32 -o ifElseIfElse ifElseIfElseCall.c ifElseIfElse.o
 
-fibRecursive: fibRecursiveCall.c fibRecursive.lang
+fibRecursive: fibRecursive.lang
 	../langCompiler < fibRecursive.lang > fibRecursive.asm
 	nasm -f elf fibRecursive.asm
-	gcc -m32 -o fibRecursive fibRecursiveCall.c fibRecursive.o
+	gcc -m32 -o fibRecursive fibRecursive.o
 
 main: main.lang
 	../langCompiler < main.lang > main.asm

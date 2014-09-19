@@ -3,10 +3,9 @@ Program :: ExternImport* FuncDef + ;
 ExternImport :: #"extern" ^Identifier #Terminator;
 
 FuncDef :: #"func" ^Identifier ArgList Block ;
-ArgList :: #"\(" ^Identifier ? ^CommaArg * #"\)" ;
-CommaArg :: #"," ^Identifier ;
+ArgList :: #"(" (^Identifier (#"," ^Identifier)*)? #")" ;
 
-Block :: #"\{" Statement* #"\}" ;
+Block :: #"{" Statement* #"}" ;
 Statement :: Assignment
            | Ifblock
            | Whileblock
@@ -23,15 +22,14 @@ Statement :: Assignment
 
 Assignment :: ^Identifier #"=" Expression #Terminator ;
 Pass :: #"pass" #Terminator ;
-Ifblock :: #"if" #"\(" LogicExpr #"\)" Statement Elseifblock * Elseblock ? ;
-Elseifblock :: #"else" #"if" #"\(" LogicExpr #"\)" Statement ;
+Ifblock :: #"if" #"(" LogicExpr #")" Statement Elseifblock * Elseblock ? ;
+Elseifblock :: #"else" #"if" #"(" LogicExpr #")" Statement ;
 Elseblock :: #"else" Statement ;
 
-Whileblock :: #"while" #"\(" LogicExpr #"\)" Statement ;
+Whileblock :: #"while" #"(" LogicExpr #")" Statement ;
 
 
-ParamList :: #"\(" Expression ? ^CommaParam * #"\)" ;
-CommaParam :: #"," Expression ;
+ParamList :: #"(" (Expression (#"," Expression)*)? #")" ;
 FuncCall :: ^Identifier ParamList;
 
 ReturnStmt :: # "return" Expression #Terminator ;
@@ -57,7 +55,7 @@ Value :: FuncCall
        | Num
        | ParenExpr
        | Identifier ;
-ParenExpr :: #"\(" LogicExpr #"\)" ;
+ParenExpr :: #"(" LogicExpr #")" ;
 
 Terminator :: #";" ;
 SumOp :: /[+-]/ ;
@@ -71,7 +69,7 @@ LogicOpLogicRelationship :: ^LogicOp LogicRelationship;
 LogicRelationship :: Expression ^RelationOpExpression ? ;
 RelationOpExpression :: ^RelationOp Expression;
 LogicOp :: "&&"
-         | "\|\|" ;
+         | "||" ;
 RelationOp :: "<="
             | ">="
             | "<"

@@ -7,7 +7,6 @@ interface Visitor
     void visit(ExternImportNode node);
     void visit(FuncDefNode node);
     void visit(ArgListNode node);
-    void visit(CommaArgNode node);
     void visit(BlockNode node);
     void visit(StatementNode node);
     void visit(AssignmentNode node);
@@ -17,7 +16,6 @@ interface Visitor
     void visit(ElseblockNode node);
     void visit(WhileblockNode node);
     void visit(ParamListNode node);
-    void visit(CommaParamNode node);
     void visit(FuncCallNode node);
     void visit(ReturnStmtNode node);
     void visit(PrintNode node);
@@ -87,16 +85,6 @@ class PrintVisitor : Visitor
     void visit(ArgListNode node)
     {
         writeln(indent, "ARGLISTNODE");
-        indent ~= "  ";
-        foreach (child; node.children)
-        {
-            child.accept(this);
-        }
-        indent = indent[0..$-2];
-    }
-    void visit(CommaArgNode node)
-    {
-        writeln(indent, "COMMAARGNODE");
         indent ~= "  ";
         foreach (child; node.children)
         {
@@ -187,16 +175,6 @@ class PrintVisitor : Visitor
     void visit(ParamListNode node)
     {
         writeln(indent, "PARAMLISTNODE");
-        indent ~= "  ";
-        foreach (child; node.children)
-        {
-            child.accept(this);
-        }
-        indent = indent[0..$-2];
-    }
-    void visit(CommaParamNode node)
-    {
-        writeln(indent, "COMMAPARAMNODE");
         indent ~= "  ";
         foreach (child; node.children)
         {

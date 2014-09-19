@@ -3,500 +3,562 @@ import std.regex;
 import std.string;
 import std.array;
 import std.algorithm;
+import std.variant;
 import visitor;
 void printTree(ASTNode node, string indent = "")
 {
-    if (cast(ASTNonTerminal)node)
-    {
+    if (cast(ASTNonTerminal)node) {
         writeln(indent, (cast(ASTNonTerminal)node).name);
-        foreach (x; (cast(ASTNonTerminal)node).children)
-        {
+        foreach (x; (cast(ASTNonTerminal)node).children) {
             printTree(x, indent ~ "  ");
         }
     }
-    else if (cast(ASTTerminal)node)
-    {
+    else if (cast(ASTTerminal)node) {
         writeln(indent, "[", (cast(ASTTerminal)node).token, "]: ",
             (cast(ASTTerminal)node).index);
     }
 }
-interface ASTNode
+abstract class ASTNode
 {
+    ASTNonTerminal parent;
+    Variant[string] data;
     void accept(Visitor v);
+    void setParent(ASTNonTerminal node) {
+        parent = node;
+    }
 }
 abstract class ASTNonTerminal : ASTNode
 {
     ASTNode[] children;
     string name;
-    void addChild(ASTNode node)
-    {
+    void addChild(ASTNode node) {
         children ~= node;
+    }
+    Tag getTag() {
+        return Tag.ASTNONTERMINAL;
     }
 }
 class ASTTerminal : ASTNode
 {
     const string token;
     const uint index;
-    this (string token, uint index)
-    {
+    this (string token, uint index) {
         this.token = token;
         this.index = index;
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
     }
 }
 class ProgramNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PROGRAM";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.PROGRAM;
     }
 }
 class ExternImportNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "EXTERNIMPORT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.EXTERNIMPORT;
     }
 }
 class FuncDefNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "FUNCDEF";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.FUNCDEF;
     }
 }
 class ArgListNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "ARGLIST";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
     }
-}
-class CommaArgNode : ASTNonTerminal
-{
-    this ()
-    {
-        this.name = "COMMAARG";
-    }
-    void accept(Visitor v)
-    {
-        v.visit(this);
+    override Tag getTag() {
+        return Tag.ARGLIST;
     }
 }
 class BlockNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "BLOCK";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.BLOCK;
     }
 }
 class StatementNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "STATEMENT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.STATEMENT;
     }
 }
 class AssignmentNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "ASSIGNMENT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.ASSIGNMENT;
     }
 }
 class PassNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PASS";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.PASS;
     }
 }
 class IfblockNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "IFBLOCK";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.IFBLOCK;
     }
 }
 class ElseifblockNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "ELSEIFBLOCK";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.ELSEIFBLOCK;
     }
 }
 class ElseblockNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "ELSEBLOCK";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.ELSEBLOCK;
     }
 }
 class WhileblockNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "WHILEBLOCK";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.WHILEBLOCK;
     }
 }
 class ParamListNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PARAMLIST";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
     }
-}
-class CommaParamNode : ASTNonTerminal
-{
-    this ()
-    {
-        this.name = "COMMAPARAM";
-    }
-    void accept(Visitor v)
-    {
-        v.visit(this);
+    override Tag getTag() {
+        return Tag.PARAMLIST;
     }
 }
 class FuncCallNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "FUNCCALL";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.FUNCCALL;
     }
 }
 class ReturnStmtNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "RETURNSTMT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.RETURNSTMT;
     }
 }
 class PrintNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PRINT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.PRINT;
     }
 }
 class SpawnNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "SPAWN";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.SPAWN;
     }
 }
 class ChanReadNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "CHANREAD";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.CHANREAD;
     }
 }
 class ChanWriteNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "CHANWRITE";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.CHANWRITE;
     }
 }
 class MakeChanNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "MAKECHAN";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.MAKECHAN;
     }
 }
 class YieldNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "YIELD";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.YIELD;
     }
 }
 class ExpressionNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "EXPRESSION";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.EXPRESSION;
     }
 }
 class SumNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "SUM";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.SUM;
     }
 }
 class SumOpProductNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "SUMOPPRODUCT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.SUMOPPRODUCT;
     }
 }
 class ProductNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PRODUCT";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.PRODUCT;
     }
 }
 class MulOpValueNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "MULOPVALUE";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.MULOPVALUE;
     }
 }
 class ValueNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "VALUE";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.VALUE;
     }
 }
 class ParenExprNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "PARENEXPR";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.PARENEXPR;
     }
 }
 class TerminatorNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "TERMINATOR";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.TERMINATOR;
     }
 }
 class SumOpNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "SUMOP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.SUMOP;
     }
 }
 class MulOpNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "MULOP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.MULOP;
     }
 }
 class NumNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "NUM";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.NUM;
     }
 }
 class IdentifierNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "IDENTIFIER";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.IDENTIFIER;
     }
 }
 class LogicExprNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "LOGICEXPR";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.LOGICEXPR;
     }
 }
 class LogicOpLogicRelationshipNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "LOGICOPLOGICRELATIONSHIP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.LOGICOPLOGICRELATIONSHIP;
     }
 }
 class LogicRelationshipNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "LOGICRELATIONSHIP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.LOGICRELATIONSHIP;
     }
 }
 class RelationOpExpressionNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "RELATIONOPEXPRESSION";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.RELATIONOPEXPRESSION;
     }
 }
 class LogicOpNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "LOGICOP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
+    }
+    override Tag getTag() {
+        return Tag.LOGICOP;
     }
 }
 class RelationOpNode : ASTNonTerminal
 {
-    this ()
-    {
+    this () {
         this.name = "RELATIONOP";
     }
-    void accept(Visitor v)
-    {
+    override void accept(Visitor v) {
         v.visit(this);
     }
+    override Tag getTag() {
+        return Tag.RELATIONOP;
+    }
+}
+enum Tag {
+    PROGRAM,
+    EXTERNIMPORT,
+    FUNCDEF,
+    ARGLIST,
+    BLOCK,
+    STATEMENT,
+    ASSIGNMENT,
+    PASS,
+    IFBLOCK,
+    ELSEIFBLOCK,
+    ELSEBLOCK,
+    WHILEBLOCK,
+    PARAMLIST,
+    FUNCCALL,
+    RETURNSTMT,
+    PRINT,
+    SPAWN,
+    CHANREAD,
+    CHANWRITE,
+    MAKECHAN,
+    YIELD,
+    EXPRESSION,
+    SUM,
+    SUMOPPRODUCT,
+    PRODUCT,
+    MULOPVALUE,
+    VALUE,
+    PARENEXPR,
+    TERMINATOR,
+    SUMOP,
+    MULOP,
+    NUM,
+    IDENTIFIER,
+    LOGICEXPR,
+    LOGICOPLOGICRELATIONSHIP,
+    LOGICRELATIONSHIP,
+    RELATIONOPEXPRESSION,
+    LOGICOP,
+    RELATIONOP,
+    ASTNONTERMINAL
 }
 class Parser
 {
@@ -522,16 +584,6 @@ private:
     string source;
     uint index;
     ASTNode[] stack;
-    struct ParenResult
-    {
-        uint collectedNodes;
-        bool isSuccess;
-        this (uint collectedNodes, bool isSuccess)
-        {
-            this.collectedNodes = collectedNodes;
-            this.isSuccess = isSuccess;
-        }
-    }
     debug (TRACE)
     {
         string traceIndent;
@@ -540,14 +592,30 @@ private:
             string funcName = __FUNCTION__;
             funcName =
                 funcName[__MODULE__.length + typeof(this).stringof.length + 2..$];
-            writeln(traceIndent, "Entered: ", funcName, ", Index: ", index);
+            writeln(traceIndent, "Entered: ", funcName, ", L: ", getLineNumber(index), ", C:", getColumnNumber(index));
             traceIndent ~= "  ";
             scope(exit)
             {
                 traceIndent = traceIndent[0..$-2];
-                writeln(traceIndent, "Exiting: ", funcName, ", Index: ", index);
+                writeln(traceIndent, "Exiting: ", funcName, ", L: ", getLineNumber(index), ", C:", getColumnNumber(index));
             }
             `;
+    }
+    private uint getLineNumber(const uint index) pure
+    {
+        uint line = 1;
+        for (auto i = 0; i < source[0..index].length; i++)
+        {
+            if (source[i] == '\n')
+            {
+                line++;
+            }
+        }
+        return line;
+    }
+    private uint getColumnNumber(const uint index) pure
+    {
+        return cast(uint)(index - source[0..index].lastIndexOf('\n'));
     }
     bool program()
     {
@@ -575,6 +643,7 @@ private:
         auto nonTerminal = new ProgramNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -585,10 +654,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool externImportLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^extern`);
+            auto reg = ctRegex!(`^(?:extern)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -603,7 +673,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (externImportLiteral_1())
         {
         }
@@ -642,6 +711,7 @@ private:
         auto nonTerminal = new ExternImportNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -652,10 +722,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool funcDefLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^func`);
+            auto reg = ctRegex!(`^(?:func)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -670,7 +741,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (funcDefLiteral_1())
         {
         }
@@ -719,6 +789,7 @@ private:
         auto nonTerminal = new FuncDefNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -729,10 +800,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool argListLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -750,7 +822,7 @@ private:
         bool argListLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -765,7 +837,84 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
+        bool argListParen_1()
+        {
+            debug (TRACE) mixin(tracer);
+            uint saveIndex = index;
+            bool argListParen_1Paren_1()
+            {
+                debug (TRACE) mixin(tracer);
+                uint saveIndex = index;
+                bool argListParen_1Paren_1Literal_1()
+                {
+                    debug (TRACE) mixin(tracer);
+                    auto reg = ctRegex!(`^(?:,)`);
+                    auto mat = match(source[index..$], reg);
+                    if (mat)
+                    {
+                        debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
+                        index += mat.captures[0].length;
+                        consumeWhitespace();
+                    }
+                    else
+                    {
+                        debug (TRACE) writeln(traceIndent, "  No match.");
+                        return false;
+                    }
+                    return true;
+                }
+                uint innerCollectedNodes = 0;
+                if (argListParen_1Paren_1Literal_1())
+                {
+                }
+                else
+                {
+                    stack = stack[0..$-innerCollectedNodes];
+                    index = saveIndex;
+                    return false;
+                }
+                if (identifier())
+                {
+                    auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
+                    stack = stack[0..$-1];
+                    foreach (child; tempNode.children)
+                    {
+                        stack ~= child;
+                    }
+                    innerCollectedNodes += tempNode.children.length;
+                }
+                else
+                {
+                    stack = stack[0..$-innerCollectedNodes];
+                    index = saveIndex;
+                    return false;
+                }
+                collectedNodes += innerCollectedNodes;
+                return true;
+            }
+            uint innerCollectedNodes = 0;
+            if (identifier())
+            {
+                auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
+                stack = stack[0..$-1];
+                foreach (child; tempNode.children)
+                {
+                    stack ~= child;
+                }
+                innerCollectedNodes += tempNode.children.length;
+            }
+            else
+            {
+                stack = stack[0..$-innerCollectedNodes];
+                index = saveIndex;
+                return false;
+            }
+            while (argListParen_1Paren_1())
+            {
+            }
+            collectedNodes += innerCollectedNodes;
+            return true;
+        }
         if (argListLiteral_1())
         {
         }
@@ -775,25 +924,8 @@ private:
             index = saveIndex;
             return false;
         }
-        if (identifier())
+        if (argListParen_1())
         {
-            auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
-            stack = stack[0..$-1];
-            foreach (child; tempNode.children)
-            {
-                stack ~= child;
-            }
-            collectedNodes += tempNode.children.length;
-        }
-        while (commaArg())
-        {
-            auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
-            stack = stack[0..$-1];
-            foreach (child; tempNode.children)
-            {
-                stack ~= child;
-            }
-            collectedNodes += tempNode.children.length;
         }
         if (argListLiteral_2())
         {
@@ -807,63 +939,7 @@ private:
         auto nonTerminal = new ArgListNode();
         foreach (node; stack[$-collectedNodes..$])
         {
-            nonTerminal.addChild(node);
-        }
-        stack = stack[0..$-collectedNodes];
-        stack ~= nonTerminal;
-        return true;
-    }
-    bool commaArg()
-    {
-        debug (TRACE) mixin(tracer);
-        uint saveIndex = index;
-        bool commaArgLiteral_1()
-        {
-            debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^,`);
-            auto mat = match(source[index..$], reg);
-            if (mat)
-            {
-                debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
-                index += mat.captures[0].length;
-                consumeWhitespace();
-            }
-            else
-            {
-                debug (TRACE) writeln(traceIndent, "  No match.");
-                return false;
-            }
-            return true;
-        }
-        uint collectedNodes = 0;
-        if (commaArgLiteral_1())
-        {
-        }
-        else
-        {
-            stack = stack[0..$-collectedNodes];
-            index = saveIndex;
-            return false;
-        }
-        if (identifier())
-        {
-            auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
-            stack = stack[0..$-1];
-            foreach (child; tempNode.children)
-            {
-                stack ~= child;
-            }
-            collectedNodes += tempNode.children.length;
-        }
-        else
-        {
-            stack = stack[0..$-collectedNodes];
-            index = saveIndex;
-            return false;
-        }
-        auto nonTerminal = new CommaArgNode();
-        foreach (node; stack[$-collectedNodes..$])
-        {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -874,10 +950,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool blockLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\{`);
+            auto reg = ctRegex!(`^(?:\{)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -895,7 +972,7 @@ private:
         bool blockLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\}`);
+            auto reg = ctRegex!(`^(?:\})`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -910,7 +987,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (blockLiteral_1())
         {
         }
@@ -936,6 +1012,7 @@ private:
         auto nonTerminal = new BlockNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1004,6 +1081,7 @@ private:
         auto nonTerminal = new StatementNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1014,10 +1092,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool assignmentLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^=`);
+            auto reg = ctRegex!(`^(?:=)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1032,7 +1111,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (identifier())
         {
             auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
@@ -1081,6 +1159,7 @@ private:
         auto nonTerminal = new AssignmentNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1091,10 +1170,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool passLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^pass`);
+            auto reg = ctRegex!(`^(?:pass)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1109,7 +1189,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (passLiteral_1())
         {
         }
@@ -1132,6 +1211,7 @@ private:
         auto nonTerminal = new PassNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1142,10 +1222,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool ifblockLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^if`);
+            auto reg = ctRegex!(`^(?:if)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1163,7 +1244,7 @@ private:
         bool ifblockLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1181,7 +1262,7 @@ private:
         bool ifblockLiteral_3()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1196,7 +1277,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (ifblockLiteral_1())
         {
         }
@@ -1255,6 +1335,7 @@ private:
         auto nonTerminal = new IfblockNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1265,10 +1346,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool elseifblockLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^else`);
+            auto reg = ctRegex!(`^(?:else)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1286,7 +1368,7 @@ private:
         bool elseifblockLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^if`);
+            auto reg = ctRegex!(`^(?:if)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1304,7 +1386,7 @@ private:
         bool elseifblockLiteral_3()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1322,7 +1404,7 @@ private:
         bool elseifblockLiteral_4()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1337,7 +1419,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (elseifblockLiteral_1())
         {
         }
@@ -1397,6 +1478,7 @@ private:
         auto nonTerminal = new ElseifblockNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1407,10 +1489,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool elseblockLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^else`);
+            auto reg = ctRegex!(`^(?:else)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1425,7 +1508,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (elseblockLiteral_1())
         {
         }
@@ -1448,6 +1530,7 @@ private:
         auto nonTerminal = new ElseblockNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1458,10 +1541,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool whileblockLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^while`);
+            auto reg = ctRegex!(`^(?:while)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1479,7 +1563,7 @@ private:
         bool whileblockLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1497,7 +1581,7 @@ private:
         bool whileblockLiteral_3()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1512,7 +1596,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (whileblockLiteral_1())
         {
         }
@@ -1563,6 +1646,7 @@ private:
         auto nonTerminal = new WhileblockNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1573,10 +1657,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool paramListLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1594,7 +1679,7 @@ private:
         bool paramListLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1609,7 +1694,72 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
+        bool paramListParen_1()
+        {
+            debug (TRACE) mixin(tracer);
+            uint saveIndex = index;
+            bool paramListParen_1Paren_1()
+            {
+                debug (TRACE) mixin(tracer);
+                uint saveIndex = index;
+                bool paramListParen_1Paren_1Literal_1()
+                {
+                    debug (TRACE) mixin(tracer);
+                    auto reg = ctRegex!(`^(?:,)`);
+                    auto mat = match(source[index..$], reg);
+                    if (mat)
+                    {
+                        debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
+                        index += mat.captures[0].length;
+                        consumeWhitespace();
+                    }
+                    else
+                    {
+                        debug (TRACE) writeln(traceIndent, "  No match.");
+                        return false;
+                    }
+                    return true;
+                }
+                uint innerCollectedNodes = 0;
+                if (paramListParen_1Paren_1Literal_1())
+                {
+                }
+                else
+                {
+                    stack = stack[0..$-innerCollectedNodes];
+                    index = saveIndex;
+                    return false;
+                }
+                if (expression())
+                {
+                    innerCollectedNodes++;
+                }
+                else
+                {
+                    stack = stack[0..$-innerCollectedNodes];
+                    index = saveIndex;
+                    return false;
+                }
+                collectedNodes += innerCollectedNodes;
+                return true;
+            }
+            uint innerCollectedNodes = 0;
+            if (expression())
+            {
+                innerCollectedNodes++;
+            }
+            else
+            {
+                stack = stack[0..$-innerCollectedNodes];
+                index = saveIndex;
+                return false;
+            }
+            while (paramListParen_1Paren_1())
+            {
+            }
+            collectedNodes += innerCollectedNodes;
+            return true;
+        }
         if (paramListLiteral_1())
         {
         }
@@ -1619,19 +1769,8 @@ private:
             index = saveIndex;
             return false;
         }
-        if (expression())
+        if (paramListParen_1())
         {
-            collectedNodes++;
-        }
-        while (commaParam())
-        {
-            auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
-            stack = stack[0..$-1];
-            foreach (child; tempNode.children)
-            {
-                stack ~= child;
-            }
-            collectedNodes += tempNode.children.length;
         }
         if (paramListLiteral_2())
         {
@@ -1645,57 +1784,7 @@ private:
         auto nonTerminal = new ParamListNode();
         foreach (node; stack[$-collectedNodes..$])
         {
-            nonTerminal.addChild(node);
-        }
-        stack = stack[0..$-collectedNodes];
-        stack ~= nonTerminal;
-        return true;
-    }
-    bool commaParam()
-    {
-        debug (TRACE) mixin(tracer);
-        uint saveIndex = index;
-        bool commaParamLiteral_1()
-        {
-            debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^,`);
-            auto mat = match(source[index..$], reg);
-            if (mat)
-            {
-                debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
-                index += mat.captures[0].length;
-                consumeWhitespace();
-            }
-            else
-            {
-                debug (TRACE) writeln(traceIndent, "  No match.");
-                return false;
-            }
-            return true;
-        }
-        uint collectedNodes = 0;
-        if (commaParamLiteral_1())
-        {
-        }
-        else
-        {
-            stack = stack[0..$-collectedNodes];
-            index = saveIndex;
-            return false;
-        }
-        if (expression())
-        {
-            collectedNodes++;
-        }
-        else
-        {
-            stack = stack[0..$-collectedNodes];
-            index = saveIndex;
-            return false;
-        }
-        auto nonTerminal = new CommaParamNode();
-        foreach (node; stack[$-collectedNodes..$])
-        {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1736,6 +1825,7 @@ private:
         auto nonTerminal = new FuncCallNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1746,10 +1836,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool returnStmtLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^return`);
+            auto reg = ctRegex!(`^(?:return)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1764,7 +1855,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (returnStmtLiteral_1())
         {
         }
@@ -1797,6 +1887,7 @@ private:
         auto nonTerminal = new ReturnStmtNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1807,10 +1898,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool printLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^print`);
+            auto reg = ctRegex!(`^(?:print)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1825,7 +1917,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (printLiteral_1())
         {
         }
@@ -1864,6 +1955,7 @@ private:
         auto nonTerminal = new PrintNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1874,10 +1966,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool spawnLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^spawn`);
+            auto reg = ctRegex!(`^(?:spawn)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1892,7 +1985,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (spawnLiteral_1())
         {
         }
@@ -1925,6 +2017,7 @@ private:
         auto nonTerminal = new SpawnNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -1935,10 +2028,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool chanReadLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^<-`);
+            auto reg = ctRegex!(`^(?:<\-)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -1953,7 +2047,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (identifier())
         {
             collectedNodes++;
@@ -1996,6 +2089,7 @@ private:
         auto nonTerminal = new ChanReadNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2006,10 +2100,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool chanWriteLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^->`);
+            auto reg = ctRegex!(`^(?:\->)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2024,7 +2119,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (identifier())
         {
             collectedNodes++;
@@ -2067,6 +2161,7 @@ private:
         auto nonTerminal = new ChanWriteNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2077,10 +2172,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool makeChanLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^makechan`);
+            auto reg = ctRegex!(`^(?:makechan)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2095,7 +2191,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (makeChanLiteral_1())
         {
         }
@@ -2128,6 +2223,7 @@ private:
         auto nonTerminal = new MakeChanNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2138,10 +2234,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool yieldLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^yield`);
+            auto reg = ctRegex!(`^(?:yield)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2156,7 +2253,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (yieldLiteral_1())
         {
         }
@@ -2179,6 +2275,7 @@ private:
         auto nonTerminal = new YieldNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2203,6 +2300,7 @@ private:
         auto nonTerminal = new ExpressionNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2237,6 +2335,7 @@ private:
         auto nonTerminal = new SumNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2277,6 +2376,7 @@ private:
         auto nonTerminal = new SumOpProductNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2311,6 +2411,7 @@ private:
         auto nonTerminal = new ProductNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2351,6 +2452,7 @@ private:
         auto nonTerminal = new MulOpValueNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2387,6 +2489,7 @@ private:
         auto nonTerminal = new ValueNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2397,10 +2500,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool parenExprLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\(`);
+            auto reg = ctRegex!(`^(?:\()`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2418,7 +2522,7 @@ private:
         bool parenExprLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\)`);
+            auto reg = ctRegex!(`^(?:\))`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2433,7 +2537,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (parenExprLiteral_1())
         {
         }
@@ -2465,6 +2568,7 @@ private:
         auto nonTerminal = new ParenExprNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2475,10 +2579,11 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool terminatorLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^;`);
+            auto reg = ctRegex!(`^(?:;)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
@@ -2493,7 +2598,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (terminatorLiteral_1())
         {
         }
@@ -2506,6 +2610,7 @@ private:
         auto nonTerminal = new TerminatorNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2516,15 +2621,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool sumOpLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^[+-]`);
+            auto reg = ctRegex!(`^(?:[+-])`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2536,7 +2646,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (sumOpLiteral_1())
         {
             collectedNodes++;
@@ -2550,6 +2659,7 @@ private:
         auto nonTerminal = new SumOpNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2560,15 +2670,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool mulOpLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^[*\/%]`);
+            auto reg = ctRegex!(`^(?:[*\/%])`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2580,7 +2695,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (mulOpLiteral_1())
         {
             collectedNodes++;
@@ -2594,6 +2708,7 @@ private:
         auto nonTerminal = new MulOpNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2604,15 +2719,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool numLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^[0-9]+(?:\.[0-9]*)?`);
+            auto reg = ctRegex!(`^(?:[0-9]+(?:\.[0-9]*)?)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2624,7 +2744,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (numLiteral_1())
         {
             collectedNodes++;
@@ -2638,6 +2757,7 @@ private:
         auto nonTerminal = new NumNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2648,15 +2768,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool identifierLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^[a-zA-Z_][a-zA-Z0-9_]*`);
+            auto reg = ctRegex!(`^(?:[a-zA-Z_][a-zA-Z0-9_]*)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2668,7 +2793,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (identifierLiteral_1())
         {
             collectedNodes++;
@@ -2682,6 +2806,7 @@ private:
         auto nonTerminal = new IdentifierNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2716,6 +2841,7 @@ private:
         auto nonTerminal = new LogicExprNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2756,6 +2882,7 @@ private:
         auto nonTerminal = new LogicOpLogicRelationshipNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2790,6 +2917,7 @@ private:
         auto nonTerminal = new LogicRelationshipNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2830,6 +2958,7 @@ private:
         auto nonTerminal = new RelationOpExpressionNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2840,15 +2969,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool logicOpLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^&&`);
+            auto reg = ctRegex!(`^(?:&&)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2863,12 +2997,16 @@ private:
         bool logicOpLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^\|\|`);
+            auto reg = ctRegex!(`^(?:\|\|)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2880,7 +3018,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (logicOpLiteral_1())
         {
             collectedNodes++;
@@ -2898,6 +3035,7 @@ private:
         auto nonTerminal = new LogicOpNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
@@ -2908,15 +3046,20 @@ private:
     {
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
+        uint collectedNodes = 0;
         bool relationOpLiteral_1()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^<=`);
+            auto reg = ctRegex!(`^(?:<=)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2931,12 +3074,16 @@ private:
         bool relationOpLiteral_2()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^>=`);
+            auto reg = ctRegex!(`^(?:>=)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2951,12 +3098,16 @@ private:
         bool relationOpLiteral_3()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^<`);
+            auto reg = ctRegex!(`^(?:<)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2971,12 +3122,16 @@ private:
         bool relationOpLiteral_4()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^>`);
+            auto reg = ctRegex!(`^(?:>)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -2991,12 +3146,16 @@ private:
         bool relationOpLiteral_5()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^==`);
+            auto reg = ctRegex!(`^(?:==)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -3011,12 +3170,16 @@ private:
         bool relationOpLiteral_6()
         {
             debug (TRACE) mixin(tracer);
-            auto reg = ctRegex!(`^!=`);
+            auto reg = ctRegex!(`^(?:!=)`);
             auto mat = match(source[index..$], reg);
             if (mat)
             {
                 debug (TRACE) writeln(traceIndent, "  Match: [", mat.captures[0], "]");
                 auto terminal = new ASTTerminal(mat.captures[0], index);
+                terminal.data["TOK_BEGIN"] = index;
+                terminal.data["TOK_END"] = index + mat.captures[0].length;
+                terminal.data["LINE"] = getLineNumber(index);
+                terminal.data["COLUMN"] = getColumnNumber(index);
                 index += mat.captures[0].length;
                 consumeWhitespace();
                 stack ~= terminal;
@@ -3028,7 +3191,6 @@ private:
             }
             return true;
         }
-        uint collectedNodes = 0;
         if (relationOpLiteral_1())
         {
             collectedNodes++;
@@ -3062,6 +3224,7 @@ private:
         auto nonTerminal = new RelationOpNode();
         foreach (node; stack[$-collectedNodes..$])
         {
+            node.setParent(nonTerminal);
             nonTerminal.addChild(node);
         }
         stack = stack[0..$-collectedNodes];
