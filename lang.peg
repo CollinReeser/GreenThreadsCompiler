@@ -15,6 +15,7 @@ Statement :: Assignment
            | Yield
            | ReturnStmt
            | Spawn
+           | (FuncCall #Terminator)
            | ChanRead
            | ChanWrite
            | MakeChan
@@ -36,7 +37,7 @@ ReturnStmt :: # "return" Expression #Terminator ;
 
 Print :: #"print" ^Identifier #Terminator ;
 
-Spawn :: #"spawn" FuncCall #Terminator;
+Spawn :: #"spawn" ^FuncCall #Terminator;
 
 ChanRead :: Identifier #"<-" Identifier #Terminator;
 

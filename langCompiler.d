@@ -4,6 +4,7 @@ import std.string;
 import std.array;
 import std.string;
 import std.c.stdlib;
+import std.algorithm;
 import visitor;
 import langParser;
 
@@ -377,9 +378,22 @@ class LangCompiler : Visitor
     }
     void visit(YieldNode node)
     {
+        curFunc.funcBody ~= "    call   yield\n";
     }
     void visit(SpawnNode node)
     {
+        auto funcToCall = (cast(ASTTerminal)node.children[0]).token;
+        auto numParams = (cast(ASTNonTerminal)node.children[1]).children.length;
+        // Push arguments to stack
+        node.children[1].accept(this);
+        // Push function address to stack
+        curFunc.funcBody ~= "    push   " ~ funcToCall ~ "\n";
+        // Push total size of all arguments
+        curFunc.funcBody ~= "    push   " ~ (numParams * 4).to!string ~ "\n";
+        // Add that function to the scheduler
+        curFunc.funcBody ~= "    call   newProc\n";
+        // Cleanup params on stack
+        curFunc.funcBody ~= "    add    esp, " ~ (numParams * 4).to!string ~ "\n";
     }
     void visit(ChanReadNode node)
     {
@@ -503,11 +517,53 @@ private:
             genCode ~= dataSection[seg];
         }
         genCode ~= "    SECTION .text\n";
+        // Get the main function, rename it, and generate the true main that
+        // initialized the runtime
+        auto mainFunc = funcs.filter!(a => a.funcName == "main").array;
+        if (mainFunc.length == 0)
+        {
+            writeln("No main function! Cannot init runtime.");
+        }
+        else if (mainFunc.length > 1)
+        {
+            writeln("Multiple definitions of main! Unrecoverable error.");
+        }
+        else
+        {
+            mainFunc[0].funcName = "__usermain";
+        }
         foreach (func; funcs)
         {
             func.compileFunc();
             genCode ~= func.func;
         }
+        auto runtimeMain = q"EOS
+    global main
+main:
+    push   ebp         ; set up stack frame
+    mov    ebp, esp
+
+    call   initThreadManager
+    push   __usermain
+    push   dword 0
+    call   newProc
+    add    esp, 8
+
+    call   execScheduler
+    call   takedownThreadManager
+
+    mov    esp, ebp    ; takedown stack frame
+    pop    ebp
+    ret
+EOS";
+        genCode = q"EOS
+    extern initThreadManager
+    extern execScheduler
+    extern takedownThreadManager
+    extern newProc
+    extern yield
+EOS" ~ genCode;
+        genCode ~= runtimeMain;
     }
 
     string getVarLoc(string var)

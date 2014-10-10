@@ -1024,6 +1024,34 @@ private:
         debug (TRACE) mixin(tracer);
         uint saveIndex = index;
         uint collectedNodes = 0;
+        bool statementParen_1()
+        {
+            debug (TRACE) mixin(tracer);
+            uint saveIndex = index;
+            uint innerCollectedNodes = 0;
+            if (funcCall())
+            {
+                innerCollectedNodes++;
+            }
+            else
+            {
+                stack = stack[0..$-innerCollectedNodes];
+                index = saveIndex;
+                return false;
+            }
+            if (terminator())
+            {
+                stack = stack[0..$-1];
+            }
+            else
+            {
+                stack = stack[0..$-innerCollectedNodes];
+                index = saveIndex;
+                return false;
+            }
+            collectedNodes += innerCollectedNodes;
+            return true;
+        }
         if (assignment())
         {
             collectedNodes++;
@@ -1059,6 +1087,9 @@ private:
         else if (spawn())
         {
             collectedNodes++;
+        }
+        else if (statementParen_1())
+        {
         }
         else if (chanRead())
         {
@@ -1996,7 +2027,13 @@ private:
         }
         if (funcCall())
         {
-            collectedNodes++;
+            auto tempNode = cast(ASTNonTerminal)(stack[$-1]);
+            stack = stack[0..$-1];
+            foreach (child; tempNode.children)
+            {
+                stack ~= child;
+            }
+            collectedNodes += tempNode.children.length;
         }
         else
         {
